@@ -18,7 +18,15 @@ ROUTING_KEY = 'error'
 
 RABBITMQ_SERVER = 'localhost'
 
-HANDLER = 'scripture.handlers.file'
+HANDLERS = {
+    'active': 'file',
+    'handlers': {
+        'file': {
+            'path': '/Users/sebastian/git/scripture/logs',
+            'filename': 'test.log'
+        }
+    }
+}
 
 ##################################
 #
@@ -30,10 +38,10 @@ import sys
 import pika
 import scripture.handlers.file
 
-def callback(ch, method, properties, body):
-    if HANDLER == 'scripture.handlers.file':
-        scripture.handlers.file.echo('haj')
-    print " [x] Received %r" % (body,)
+def callback(ch, method, properties, message):
+    if HANDLERS['active'] == 'file':
+        scripture.handlers.file.log(message, config = HANDLERS['handlers']['file'])
+    print " [x] Received %r" % (message,)
 
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
