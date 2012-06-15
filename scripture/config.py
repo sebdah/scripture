@@ -2,6 +2,8 @@
 Config methods
 """
 
+import logger
+
 def get_config_object(config, facility, severity):
     """
     Return the config object i.e
@@ -18,7 +20,7 @@ def get_config_object(config, facility, severity):
     return ['config']['local0']['*']
     """
     if config['version'] != 0:
-        print 'Parsing config version %s is not implemented' % config['version']
+        logger.LOGGER.error('Parsing config version %s is not implemented' % config['version'])
         return False
         
     if facility in config['config']:

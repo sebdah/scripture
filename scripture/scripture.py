@@ -5,10 +5,11 @@ Basic scripture operations
 import config
 import handlers
 import definitions
+import logger
 
 import datetime
 
-def logger(ch, method, properties, msg, configuration):
+def write_log(ch, method, properties, msg, configuration):
     """
     Write the message to a given backend
     """
@@ -18,23 +19,30 @@ def logger(ch, method, properties, msg, configuration):
     
     # Get the config object
     config_object = config.get_config_object(configuration, facility, severity)
-    if not config_object:
+    if config_object is None:
+        logger.LOGGER.debug('No match of %s.%s in the configuration' % (facility, severity))
+        return False
+    elif config_object is False:
+        logger.LOGGER.error('An error occurred when parsing the configuration')
         return False
 
     # Check if the severity is high enough
     if definitions.LOG_LEVELS[severity.upper()] < definitions.LOG_LEVELS[config_object['loglevel'].upper()]:
+        logger.LOGGER.debug('Config level not high enough')
         return None
 
+    # Format the message
     message = format(   msg,
                         configuration['formatters'][config_object['formatter']],
                         facility = facility,
                         severity = severity)
     
+    # Print the message according to the handler
     for handler in config_object['handlers']:
-        if handler == 'file':
-            handlers.file.log(message, config = configuration['handlers']['file'])
+        if configuration['handlers'][handler]['type'] == 'file_handler':
+            handlers.file.log(message, config = configuration['handlers'][handler])
         
-    print " [x] Received %r" % (message,)
+    logger.LOGGER.info("Recived %s.%s: %r" % (facility, severity, msg))
 
 def format(message, format, facility = None, severity = None):
     """
